@@ -1,9 +1,10 @@
 import Vue from 'vue'
 import { GetterTree } from 'vuex'
-import { Heater, Fan, SocketState, TimeEstimates, Sensor, Chart, ChartDataSet } from './types'
+import { Heater, Fan, SocketState, TimeEstimates, Sensor, Chart, ChartDataSet, RunoutSensor, BedMesh } from './types'
 import { RootState } from '../types'
 import { chartConfiguration } from '@/globals'
 import { TinyColor } from '@ctrl/tinycolor'
+import { get } from 'lodash-es'
 
 export const getters: GetterTree<SocketState, RootState> = {
   /**
@@ -108,6 +109,75 @@ export const getters: GetterTree<SocketState, RootState> = {
   },
 
   /**
+   * Return a runout sensor's data by name
+   */
+  getRunoutSensorByName: (state) => (name: string): RunoutSensor | undefined => {
+    const sensor = get(state.printer, 'filament_switch_sensor ' + name, undefined)
+    if (sensor) {
+      return {
+        name,
+        ...sensor
+      }
+    }
+    return undefined
+  },
+
+  getRunoutSensors: (state): RunoutSensor[] => {
+    const sensors: RunoutSensor[] = []
+    state.filament_switch_sensors.forEach(name => {
+      const sensor = get(state.printer, 'filament_switch_sensor ' + name, undefined)
+      sensors.push({
+        name,
+        ...sensor
+      })
+    })
+    return sensors
+  },
+
+  /**
+   * Has this printer been configured for bed meshes?
+   */
+  getSupportsBedMesh: (state) => {
+    return (state.printer.configfile.config.bed_mesh)
+  },
+
+  /**
+   * Returns all available bed meshes, including those only in memory / currently loaded.
+   */
+  getBedMeshes: (state): BedMesh[] => {
+    const meshes: BedMesh[] = []
+    let currentProfile = ''
+    if (state.printer.bed_mesh) {
+      currentProfile = state.printer.bed_mesh.profile_name
+    }
+    if (state.printer.configfile && state.printer.configfile.config) {
+      for (const item in state.printer.configfile.config) {
+        if (item.includes(' ')) {
+          const split = item.split(' ')
+          if (
+            split.length > 0 &&
+            split[0] === 'bed_mesh'
+          ) {
+            /* eslint-disable @typescript-eslint/camelcase */
+            const profile: BedMesh = {
+              profile_name: split[1],
+              active: false
+            }
+            if (currentProfile === split[1]) profile.active = true
+            meshes.push(profile)
+          }
+        }
+      }
+    }
+    return meshes.sort((a: BedMesh, b: BedMesh) => {
+      const name1 = a.profile_name.toLowerCase()
+      const name2 = b.profile_name.toLowerCase()
+      if (a.profile_name === 'default' || b.profile_name === 'default') return 1
+      return (name1 < name2) ? -1 : (name1 > name2) ? 1 : 0
+    })
+  },
+
+  /**
    * Return available heaters
    */
   getHeaters: (state): Heater[] => {
@@ -117,13 +187,16 @@ export const getters: GetterTree<SocketState, RootState> = {
     ) {
       const r: Heater[] = []
       state.printer.heaters.available_heaters.forEach((e: string) => {
-        const config = (state.printer.configfile.config[e]) ? state.printer.configfile.config[e] : undefined
-        r.push({
-          name: e,
-          ...state.printer[e],
-          minTemp: (config && config.min_temp) ? parseInt(config.min_temp) : null,
-          maxTemp: (config && config.max_temp) ? parseInt(config.max_temp) : null
-        })
+        const heater = state.printer[e]
+        if (heater && Object.keys(heater).length > 0) {
+          const config = (state.printer.configfile.config[e]) ? state.printer.configfile.config[e] : undefined
+          r.push({
+            name: e,
+            ...heater,
+            minTemp: (config && config.min_temp) ? parseInt(config.min_temp) : null,
+            maxTemp: (config && config.max_temp) ? parseInt(config.max_temp) : null
+          })
+        }
       })
       return r.sort((a: Heater, b: Heater) => {
         const name1 = a.name.toUpperCase()
@@ -144,13 +217,16 @@ export const getters: GetterTree<SocketState, RootState> = {
     ) {
       const r: Fan[] = []
       state.temperature_fans.forEach((e: string) => {
-        const config = (state.printer.configfile.config['temperature_fan ' + e]) ? state.printer.configfile.config['temperature_fan ' + e] : undefined
-        r.push({
-          name: e,
-          ...state.printer['temperature_fan ' + e],
-          minTemp: (config && config.min_temp) ? parseInt(config.min_temp) : null,
-          maxTemp: (config && config.max_temp) ? parseInt(config.max_temp) : null
-        })
+        const fan = state.printer['temperature_fan ' + e]
+        if (fan && Object.keys(fan).length > 0) {
+          const config = (state.printer.configfile.config['temperature_fan ' + e]) ? state.printer.configfile.config['temperature_fan ' + e] : undefined
+          r.push({
+            name: e,
+            ...fan,
+            minTemp: (config && config.min_temp) ? parseInt(config.min_temp) : null,
+            maxTemp: (config && config.max_temp) ? parseInt(config.max_temp) : null
+          })
+        }
       })
       return r
     }
@@ -161,20 +237,37 @@ export const getters: GetterTree<SocketState, RootState> = {
    * Return available temperature probes / sensors.
    */
   getSensors: (state): Sensor[] => {
+    const r: Sensor[] = []
     if (
       state.temperature_sensors &&
       state.temperature_sensors.length
     ) {
-      const r: Sensor[] = []
       state.temperature_sensors.forEach((e: string) => {
-        r.push({
-          name: e,
-          ...state.printer['temperature_probes ' + e]
-        })
+        const sensor = state.printer['temperature_sensor ' + e]
+        if (sensor && Object.keys(sensor).length > 0) {
+          r.push({
+            name: e,
+            ...sensor
+          })
+        }
       })
-      return r
     }
-    return []
+
+    if (
+      state.temperature_probes &&
+      state.temperature_probes.length
+    ) {
+      state.temperature_probes.forEach((e: string) => {
+        const sensor = state.printer['temperature_probe ' + e]
+        if (sensor && Object.keys(sensor).length > 0) {
+          r.push({
+            name: e,
+            ...sensor
+          })
+        }
+      })
+    }
+    return r
   },
 
   /**

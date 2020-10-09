@@ -1,13 +1,12 @@
 <template>
-  <v-sheet color="#262626">
-    <v-container class="py-2">
+    <v-container fluid class="py-2 px-6">
       <v-row>
-        <v-col offset="4" class="py-1 px-2 text-subtitle-1 grey--text text--darken-1">
+        <v-col offset="4" class="py-0 px-2 text-subtitle-1 grey--text text--darken-1">
           Actual
         </v-col>
-        <v-col class="py-1 px-2 text-subtitle-1 grey--text text--darken-1">
+        <v-col class="py-0 px-2 text-subtitle-1 grey--text text--darken-1">
           Target
-          <v-menu bottom :offset-y="true">
+          <!-- <v-menu bottom :offset-y="true">
             <template v-slot:activator="{ on, attrs }">
               <v-btn small v-bind="attrs" v-on="on" icon color="grey"><v-icon>mdi-chevron-down</v-icon></v-btn>
             </template>
@@ -22,22 +21,17 @@
                 <v-list-item-title>Set PLA</v-list-item-title>
               </v-list-item>
             </v-list>
-          </v-menu>
+          </v-menu> -->
         </v-col>
       </v-row>
       <v-row v-for="item in heaters" :key="item.name">
         <v-col class="py-1 px-2 text-subtitle-1 grey--text text--darken-1">
           {{ item.name }}
           <small class="ml-3" v-if="item.target === 0">off</small>
-          <!-- <v-icon
-            color="grey darken-1"
-            small
-            v-if="item.target === 0">
-            mdi-power-plug-off
-          </v-icon> -->
         </v-col>
         <v-col class="py-1 px-2 grey--text text--lighten-1 text-h5">
           {{ item.temperature.toFixed(1) }}
+          <small>°C</small>
         </v-col>
         <v-col class="py-1 px-2">
           <input-temperature
@@ -68,6 +62,7 @@
         </v-col>
         <v-col class="py-1 px-2 grey--text text--lighten-1 text-h5">
           {{ item.temperature.toFixed(1) }}
+          <small>°C</small>
         </v-col>
         <v-col class="py-1 px-2 grey--text text--lighten-1 text-h5">
           <input-temperature
@@ -78,8 +73,18 @@
           ></input-temperature>
         </v-col>
       </v-row>
+      <v-row v-for="item in sensors" :key="item.name">
+        <v-col class="py-1 px-2 text-subtitle-1 grey--text text--darken-1">
+          {{ item.name }}
+        </v-col>
+        <v-col class="py-1 px-2 grey--text text--lighten-1 text-h5">
+          {{ item.temperature.toFixed(1) }}
+          <small>°C</small>
+        </v-col>
+        <v-col class="py-1 px-2 grey--text text--lighten-1 text-h5">
+        </v-col>
+      </v-row>
     </v-container>
-  </v-sheet>
 </template>
 
 <script lang="ts">
@@ -104,6 +109,10 @@ export default class TemperatureTargetsWidget extends Mixins(UtilsMixin) {
 
   get fans () {
     return this.$store.getters['socket/getFans']
+  }
+
+  get sensors () {
+    return this.$store.getters['socket/getSensors']
   }
 
   setHeaterTargetTemp (item: Heater, target: number) {

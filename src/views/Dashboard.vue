@@ -18,18 +18,14 @@ import { Component, Vue } from 'vue-property-decorator'
 import StatusCard from '@/components/cards/StatusCard.vue'
 import ToolsCard from '@/components/cards/ToolsCard.vue'
 import ToolheadCard from '@/components/cards/ToolheadCard.vue'
-import TerminalCard from '@/components/cards/TerminalCard.vue'
 import TemperatureCard from '@/components/cards/TemperatureCard.vue'
-import WebCamCard from '@/components/cards/WebCamCard.vue'
 
 @Component({
   components: {
     StatusCard,
     ToolsCard,
     ToolheadCard,
-    TerminalCard,
-    TemperatureCard,
-    WebCamCard
+    TemperatureCard
   }
 })
 export default class Dashboard extends Vue {}

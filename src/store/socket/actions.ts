@@ -15,7 +15,7 @@ export const actions: ActionTree<SocketState, RootState> = {
    */
 
   /**
-    * Fired when the socket first opens.
+    * Fired when the socket opens.
     */
   async onSocketOpen ({ commit }, payload) {
     commit('onSocketOpen', payload)
@@ -23,9 +23,10 @@ export const actions: ActionTree<SocketState, RootState> = {
   },
 
   /**
-   * Fired when the socket first closes.
+   * Fired when the socket closes.
    */
   async onSocketClose ({ commit }, payload) {
+    commit('resetState')
     commit('onSocketClose', payload)
   },
 
@@ -42,7 +43,17 @@ export const actions: ActionTree<SocketState, RootState> = {
       if (payload.__request__ && payload.__request__.wait) {
         commit('removeWait', payload.__request__.wait)
       }
-      EventBus.$emit('flashMessage', { type: 'error', timeout: -1, text: payload.message })
+
+      // If our message contains json, we should try to parse it.
+      // This is pretty bad, should get moonraker to fix this response.
+      let message = ''
+      try {
+        message = JSON.parse(payload.message.replace(/'/g, '"')).message
+      } catch (e) {
+        message = payload.message
+      }
+
+      EventBus.$emit('flashMessage', { type: 'error', timeout: -1, text: message })
     }
     if (payload.code === 503) {
       //  && payload.message.toLowerCase() === 'klippy host not connected'
@@ -57,22 +68,26 @@ export const actions: ActionTree<SocketState, RootState> = {
     }
   },
 
+  async onQueryEndstops ({ commit }, payload) {
+    commit('onQueryEndstops', payload)
+  },
+
   /**
    * Print cancelled confirmation.
    */
   async onPrintCancel () {
-    console.log('Print Cancelled')
+    console.debug('Print Cancelled')
   },
 
   /**
    * Print paused confirmation.
    */
   async onPrintPause () {
-    console.log('Print Paused')
+    console.debug('Print Paused')
   },
 
   async onPrintResume () {
-    console.log('Print Resumed')
+    console.debug('Print Resumed')
   },
 
   async onPrinterInfo ({ commit }, payload) {
@@ -118,7 +133,9 @@ export const actions: ActionTree<SocketState, RootState> = {
       let key = k
       if (k.includes(' ')) key = key.replace(' ', '.')
       if (k.includes('gcode_macro')) {
-        dispatch('addMacro', k.split(' ')[1])
+        const split: string[] = k.split(' ')
+        split.shift()
+        dispatch('addMacro', split.join(' '))
       } else {
         commit('onPrinterObjectsList', key)
       }
@@ -184,7 +201,14 @@ export const actions: ActionTree<SocketState, RootState> = {
     // This initial subscribe also gives us all of our temperature fans, probes etc..
     // so we can populate a list of these things, without having to re-iterate the
     // whole printer object later.
-    const keys = ['temperature_fan', 'temperature_probe', 'temperature_sensor', 'heater_fan']
+    const keys = [
+      'temperature_fan',
+      'temperature_probe',
+      'temperature_sensor',
+      'heater_fan',
+      'filament_switch_sensor',
+      'output_pin'
+    ]
     const r: {[key: string]: string[]} = {}
 
     Object.keys(payload.status).forEach((p) => {
@@ -243,7 +267,8 @@ export const actions: ActionTree<SocketState, RootState> = {
           // A list of key strings to check for.
           let keys = [
             'temperature_fan',
-            'temperature_probe'
+            'temperature_probe',
+            'temperature_sensor'
           ]
           if (state.printer.heaters.available_heaters.length > 0) {
             keys = [...keys, ...state.printer.heaters.available_heaters]
@@ -278,7 +303,7 @@ export const actions: ActionTree<SocketState, RootState> = {
     dispatch('files/notify' + Vue.$filters.capitalize(payload.action), payload, { root: true }) // Passed on to the files module
   },
   async notifyMetadataUpdate (_, payload) {
-    console.log('metadataUpdate', payload)
+    console.debug('metadataUpdate', payload)
   },
 
   /**

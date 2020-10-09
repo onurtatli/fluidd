@@ -1,39 +1,37 @@
 <template>
-<!--
-    d-flex flex-column align-start
-    height="460"
--->
-  <v-card class="mb-4">
-    <v-tabs-items v-model="activeTab" class="mb-auto">
-      <v-tab-item :key="0">
-        <v-card-title>
-          <v-icon large left>mdi-file-code</v-icon>
-          <span class="title font-weight-light text-h5">Macros</span>
+  <v-card color="tertiary" class="mb-4">
+
+    <v-tabs-items v-model="activeTab" class="mb-auto rounded">
+      <v-tab-item :key="0" class="tertiary rounded">
+        <v-card-title class="quaternary rounded">
+          <v-icon left>mdi-file-code</v-icon>
+          <span class="font-weight-light">Macros</span>
         </v-card-title>
+        <v-divider></v-divider>
         <macros-widget></macros-widget>
       </v-tab-item>
-      <v-tab-item :key="1">
-        <v-card-title >
-          <v-icon large left>mdi-tools</v-icon>
-          <span class="title font-weight-light text-h5">Sys Commands</span>
+      <v-tab-item :key="1" class="tertiary rounded">
+        <v-card-title class="quaternary rounded">
+          <v-icon left>mdi-tools</v-icon>
+          <span class="font-weight-light">Sys Commands</span>
         </v-card-title>
+        <v-divider></v-divider>
         <system-commands-widget></system-commands-widget>
       </v-tab-item>
-      <v-tab-item :key="2">
-        <v-card-title >
-          <v-icon large left>mdi-file-multiple-outline</v-icon>
-          <span class="title font-weight-light text-h5">Jobs</span>
-        </v-card-title>
-        <v-card-text>
-          <file-system-widget root="gcodes" :show-meta-data="false"></file-system-widget>
-        </v-card-text>
+      <v-tab-item :key="2" class="tertiary rounded">
+        <file-system-widget
+          root="gcodes"
+          accept=".gcode"
+          :show-meta-data="false"
+        ></file-system-widget>
       </v-tab-item>
-      <v-tab-item :key="3">
-        <v-card-title >
-          <v-icon large left>mdi-console</v-icon>
-          <span class="title font-weight-light text-h5">Console</span>
+      <v-tab-item :key="3" class="tertiary rounded">
+        <v-card-title class="quaternary rounded">
+          <v-icon left>mdi-console</v-icon>
+          <span class="font-weight-light">Console</span>
         </v-card-title>
-          <console-widget></console-widget>
+        <v-divider></v-divider>
+        <console-widget></console-widget>
       </v-tab-item>
     </v-tabs-items>
 
@@ -41,8 +39,8 @@
       v-model="activeTab"
       fixed-tabs
       icons-and-text
+      background-color="tertiary"
     >
-    <!-- class="flex-grow-0" -->
       <v-tab :key="0">
         Macros
         <v-icon>mdi-file-code</v-icon>
@@ -60,6 +58,7 @@
         <v-icon>mdi-console</v-icon>
       </v-tab>
     </v-tabs>
+
   </v-card>
 </template>
 

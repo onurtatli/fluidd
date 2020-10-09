@@ -2,10 +2,10 @@
   <v-container fluid class="dashboard">
     <v-row>
       <v-col cols="12" class="pt-0">
-        <v-card>
-          <v-card-title>
+        <v-card color="quaternary">
+          <v-card-title class="quaternary">
             <v-icon large left>mdi-cog</v-icon>
-            <span class="title font-weight-light text-h5">UI Settings</span>
+            <span class="font-weight-light">UI Settings</span>
             <v-btn :color="(hasUnsavedChanges) ? 'error' : 'primary'" class="ml-auto" @click="saveFileConfig()"><v-icon class="mr-2">mdi-content-save-alert-outline</v-icon> Save Changes</v-btn>
           </v-card-title>
         </v-card>

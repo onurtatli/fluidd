@@ -64,9 +64,10 @@ export class WebSocketClient {
         }
         console.debug(`${this.logPrefix} Response error:`, d.error)
         this.store.dispatch('socket/onSocketError', d.error)
+        return
       }
 
-      if (request && !d.error) {
+      if (request) {
         // these are specific answers to a request we've made.
         // Build the response, including a non-enumerable ref of the original request.
         let result = (d.result) ? d.result : d.params
@@ -94,7 +95,7 @@ export class WebSocketClient {
     if (this.reconnectCount <= this.allowedReconnectAttempts) {
       this.reconnectCount += 1
       this.connection = null
-      console.log(`${this.logPrefix} Reconnecting in ${this.reconnectInterval}`)
+      console.debug(`${this.logPrefix} Reconnecting in ${this.reconnectInterval}`)
       setTimeout(() => {
         this.connect()
       }, this.reconnectInterval)
@@ -132,7 +133,7 @@ export class WebSocketClient {
       this.requests.push(request)
       this.connection.send(JSON.stringify(packet))
     } else {
-      console.log(`${this.logPrefix} Not ready.`)
+      console.debug(`${this.logPrefix} Not ready.`)
     }
   }
 }
@@ -198,7 +199,7 @@ interface SocketResponse {
   params?: Array<object>; // generic responses
   id?: number; // specific response
   result?: object; // specific response
-  error?: SocketError; // specific response
+  error?: string | SocketError; // specific response
 }
 
 interface SocketError {
